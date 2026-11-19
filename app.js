@@ -1,3 +1,5 @@
+const ASSET_VERSION='20261119-2';
+const asset=path=>`assets/${path}?v=${ASSET_VERSION}`;
 const OLD='neighborhood-stickers.png',A='stickers-community-a.png',B='stickers-community-b.png',C='stickers-community-c.png';
 const PLACES=[
   {id:'apartment',name:'公寓',cat:'building',sheet:A,pos:[0,0]}, {id:'highrise',name:'高樓',cat:'building',sheet:A,pos:[1,0]},
@@ -22,7 +24,7 @@ const PLACES=[
   {id:'parking',name:'停車場',cat:'traffic',sheet:C,pos:[3,1]}, {id:'gas',name:'加油站',cat:'traffic',sheet:C,pos:[0,2]},
   {id:'station',name:'火車站',cat:'traffic',sheet:OLD,pos:[2,1]}, {id:'bus',name:'公車站',cat:'traffic',sheet:OLD,pos:[3,1]}
 ];
-const MAPS={campus:{src:'assets/map-close.jpg',pin:[18,23],label:'校園近景'},neighborhood:{src:'assets/map-wide.jpg',pin:[44,26],label:'學校周邊'},life:{src:'assets/map-life.jpg',pin:[16,34],label:'生活圈'},town:{src:'assets/map-town.jpg',pin:null,label:'蘇澳市區'}};
+const MAPS={campus:{src:asset('map-close.jpg'),pin:[18,23],label:'校園近景'},neighborhood:{src:asset('map-wide.jpg'),pin:[44,26],label:'學校周邊'},life:{src:asset('map-life.jpg'),pin:[16,34],label:'生活圈'},town:{src:asset('map-town.jpg'),pin:null,label:'蘇澳市區'}};
 const ZHUYIN={
   apartment:['ㄍㄨㄥ','ㄩˋ'],highrise:['ㄍㄠ','ㄌㄡˊ'],rice:['ㄉㄠˋ','ㄊㄧㄢˊ'],fishpond:['ㄩˊ','ㄨㄣ'],tea:['ㄔㄚˊ','ㄩㄢˊ'],park:['ㄍㄨㄥ','ㄩㄢˊ'],
   school:['ㄒㄩㄝˊ','ㄒㄧㄠˋ'],library:['ㄊㄨˊ','ㄕㄨ','ㄍㄨㄢˇ'],clinic:['ㄓㄣˇ','ㄙㄨㄛˇ'],police:['ㄐㄧㄥˇ','ㄔㄚˊ','ㄐㄩˊ'],fire:['ㄒㄧㄠ','ㄈㄤˊ','ㄉㄨㄟˋ'],garden:['ㄘㄞˋ','ㄩㄢˊ'],
@@ -35,7 +37,7 @@ const ZHUYIN={
 const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
 const grid=$('#itemGrid'),stage=$('#mapStage'),layer=$('#placedLayer'),mapImage=$('#mapImage');
 let selected=null, editingId=null, currentMap='campus', items=[], history=[];
-function spriteStyle(p){return `background-image:url('assets/${p.sheet}');background-position:${p.pos[0]*100/3}% ${p.pos[1]*50}%`}
+function spriteStyle(p){return `background-image:url('${asset(p.sheet)}');background-position:${p.pos[0]*100/3}% ${p.pos[1]*50}%`}
 function zhuyinParts(raw=''){const match=raw.match(/[ˊˇˋ˙]/);return{base:raw.replace(/[ˊˇˋ˙]/g,''),tone:match?.[0]||''}}
 function labelHTML(p){return `<span class="annotated-label" aria-hidden="true">${[...p.name].map((char,i)=>{const z=zhuyinParts(ZHUYIN[p.id]?.[i]);return `<span class="ruby-unit"><span class="han">${char}</span><span class="zy-wrap"><span class="zy-base">${z.base}</span>${z.tone?`<span class="zy-tone">${z.tone}</span>`:''}</span></span>`}).join('')}</span><span class="sr-only">${p.name}</span>`}
 function makePalette(filter='all'){
@@ -62,7 +64,7 @@ $('#undoBtn').addEventListener('click',()=>{if(!history.length)return toast('目
 $('#clearBtn').addEventListener('click',()=>{if(!items.length)return toast('地圖目前是空的');if(confirm('確定要清除地圖上的所有物件嗎？')){snapshot();items=[];render();saveLocal();toast('已清除全部物件')}});
 function applyMap(){const cfg=MAPS[currentMap]||MAPS.campus;mapImage.src=cfg.src;mapImage.alt=`蘇澳國小${cfg.label}地圖`;const pin=$('.school-pin');pin.hidden=!cfg.pin;if(cfg.pin){pin.style.left=cfg.pin[0]+'%';pin.style.top=cfg.pin[1]+'%'}$$('.view-btn').forEach(x=>x.classList.toggle('active',x.dataset.map===currentMap))}
 $$('.view-btn').forEach(b=>b.addEventListener('click',()=>{currentMap=b.dataset.map;applyMap();saveLocal();toast(`已切換：${MAPS[currentMap].label}`)}));
-$('#helpBtn').addEventListener('click',()=>$('#helpDialog').showModal());$('#collapseBtn').addEventListener('click',()=>{const c=$('#toolbox').classList.toggle('collapsed');$('#collapseBtn').textContent=c?'展開':'收合'});
+$('#helpBtn').addEventListener('click',()=>$('#helpDialog').showModal());$('#collapseBtn').addEventListener('click',()=>{const toolbox=$('#toolbox'),button=$('#collapseBtn'),c=toolbox.classList.toggle('collapsed');$('.app-shell').classList.toggle('toolbox-collapsed',c);button.textContent=c?'展開':'收合';button.setAttribute('aria-expanded',String(!c));button.setAttribute('aria-label',c?'展開工具箱':'收合工具箱')});
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),2100)}
 function drawAnnotatedCanvas(ctx,p,x,y){const chars=[...p.name],unit=34,w=chars.length*unit+14;ctx.fillStyle='rgba(255,255,255,.94)';ctx.fillRect(x-w/2,y+41,w,52);chars.forEach((char,i)=>{const left=x-w/2+8+i*unit,z=zhuyinParts(ZHUYIN[p.id]?.[i]);ctx.fillStyle='#163a37';ctx.font='bold 18px sans-serif';ctx.fillText(char,left,y+72);ctx.fillStyle='#49615d';ctx.font='14px sans-serif';[...z.base].forEach((symbol,j)=>ctx.fillText(symbol,left+18,y+53+j*11));if(z.tone)ctx.fillText(z.tone,left+29,y+66)})}
 async function exportWork(){
@@ -70,7 +72,7 @@ async function exportWork(){
   bg.src=mapImage.src;await bg.decode();
   ctx.fillStyle='#f8f4e8';ctx.fillRect(0,0,1600,1000);const ratio=Math.max(1600/bg.width,900/bg.height),dw=bg.width*ratio,dh=bg.height*ratio;ctx.drawImage(bg,(1600-dw)/2,80+(900-dh)/2,dw,dh);
   ctx.fillStyle='#146b63';ctx.fillRect(0,0,1600,80);ctx.fillStyle='white';ctx.font='bold 34px sans-serif';ctx.fillText('我的學校附近有什麼？｜蘇澳國小探索地圖',36,51);
-  const sheets={};for(const name of [...new Set(items.map(it=>PLACES.find(p=>p.id===it.type)?.sheet).filter(Boolean))]){const img=new Image();img.src='assets/'+name;await img.decode();sheets[name]=img}items.forEach(it=>{const p=PLACES.find(q=>q.id===it.type);if(!p)return;const sheet=sheets[p.sheet],sw=sheet.width/4,sh=sheet.height/3,x=it.x/100*1600,y=80+it.y/100*900;ctx.drawImage(sheet,p.pos[0]*sw,p.pos[1]*sh,sw,sh,x-54,y-48,108,96);drawAnnotatedCanvas(ctx,p,x,y)});
+  const sheets={};for(const name of [...new Set(items.map(it=>PLACES.find(p=>p.id===it.type)?.sheet).filter(Boolean))]){const img=new Image();img.src=asset(name);await img.decode();sheets[name]=img}items.forEach(it=>{const p=PLACES.find(q=>q.id===it.type);if(!p)return;const sheet=sheets[p.sheet],sw=sheet.width/4,sh=sheet.height/3,x=it.x/100*1600,y=80+it.y/100*900;ctx.drawImage(sheet,p.pos[0]*sw,p.pos[1]*sh,sw,sh,x-54,y-48,108,96);drawAnnotatedCanvas(ctx,p,x,y)});
   ctx.fillStyle='rgba(255,255,255,.93)';ctx.fillRect(22,885,1556,92);ctx.fillStyle='#163a37';ctx.font='bold 21px sans-serif';ctx.fillText(`探索成果：放入 ${items.length} 個地點｜完成 ${items.filter(x=>x.note||x.help).length} 筆觀察紀錄`,42,922);ctx.font='17px sans-serif';ctx.fillText('地圖資訊請配合實地踏查與最新公開資訊確認。',42,953);
   const a=document.createElement('a');a.download='蘇澳國小_我的學校附近探索作品.png';a.href=canvas.toDataURL('image/png');a.click();toast('作品圖片已匯出')
 }
@@ -79,12 +81,12 @@ $('#certificateBtn').addEventListener('click',()=>{if($('#certificateBtn').disab
 async function buildMapSnapshot(){
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),bg=new Image();canvas.width=1200;canvas.height=520;bg.src=mapImage.src;await bg.decode();
   const ratio=Math.max(canvas.width/bg.width,canvas.height/bg.height),dw=bg.width*ratio,dh=bg.height*ratio;ctx.drawImage(bg,(canvas.width-dw)/2,(canvas.height-dh)/2,dw,dh);
-  const sheets={};for(const name of [...new Set(items.map(it=>PLACES.find(p=>p.id===it.type)?.sheet).filter(Boolean))]){const img=new Image();img.src='assets/'+name;await img.decode();sheets[name]=img}
+  const sheets={};for(const name of [...new Set(items.map(it=>PLACES.find(p=>p.id===it.type)?.sheet).filter(Boolean))]){const img=new Image();img.src=asset(name);await img.decode();sheets[name]=img}
   items.forEach(it=>{const p=PLACES.find(q=>q.id===it.type);if(!p)return;const sheet=sheets[p.sheet],sw=sheet.width/4,sh=sheet.height/3,x=it.x/100*canvas.width,y=it.y/100*canvas.height;ctx.drawImage(sheet,p.pos[0]*sw,p.pos[1]*sh,sw,sh,x-46,y-42,92,82);drawAnnotatedCanvas(ctx,p,x,y)});
   ctx.strokeStyle='#146b63';ctx.lineWidth=8;ctx.strokeRect(4,4,canvas.width-8,canvas.height-8);return canvas
 }
 async function downloadCertificate(name){
-  const canvas=$('#certificateCanvas'),ctx=canvas.getContext('2d'),frame=new Image();canvas.width=1600;canvas.height=1200;frame.src='assets/certificate-frame.png';await frame.decode();ctx.drawImage(frame,0,0,canvas.width,canvas.height);
+  const canvas=$('#certificateCanvas'),ctx=canvas.getContext('2d'),frame=new Image();canvas.width=1600;canvas.height=1200;frame.src=asset('certificate-frame.png');await frame.decode();ctx.drawImage(frame,0,0,canvas.width,canvas.height);
   ctx.textAlign='center';ctx.fillStyle='#146b63';ctx.font='900 58px "Noto Sans TC","PingFang TC",sans-serif';ctx.fillText('我的學校附近探索證書',800,170);
   ctx.fillStyle='#506964';ctx.font='700 25px "Noto Sans TC","PingFang TC",sans-serif';ctx.fillText('蘇澳國小・小小社區探險家',800,216);
   ctx.fillStyle='#173c38';ctx.font='900 46px "Noto Sans TC","PingFang TC",sans-serif';ctx.fillText(name,800,292);const nameWidth=Math.min(700,Math.max(260,ctx.measureText(name).width+90));ctx.strokeStyle='#e6b62e';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(800-nameWidth/2,310);ctx.lineTo(800+nameWidth/2,310);ctx.stroke();

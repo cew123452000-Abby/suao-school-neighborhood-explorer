@@ -24,7 +24,7 @@
     <aside class="toolbox" id="toolbox" aria-label="地點物件工具箱">
       <div class="toolbox-head">
         <div><p class="eyebrow">物件工具箱</p><h2>選一個，再點地圖</h2></div>
-        <button id="collapseBtn" class="mini-button" type="button" aria-label="收合工具箱">收合</button>
+        <button id="collapseBtn" class="mini-button" type="button" aria-label="收合工具箱" aria-expanded="true">收合</button>
       </div>
       <div class="category-tabs" role="tablist" aria-label="地點分類">
         <button class="category active" data-filter="all" role="tab">全部</button>
@@ -62,7 +62,7 @@
       </div>
 
       <div class="map-stage" id="mapStage" tabindex="0" aria-label="蘇澳國小周邊互動地圖，先選物件，再點地圖放置">
-        <img id="mapImage" src="assets/map-wide.jpg" alt="蘇澳國小與周邊道路地圖">
+        <img id="mapImage" src="assets/map-wide.jpg?v=20261119-2" alt="蘇澳國小與周邊道路地圖">
         <div class="school-pin" aria-label="蘇澳國小位置"><span>我的學校</span><strong>蘇澳國小</strong></div>
         <div class="placed-layer" id="placedLayer"></div>
         <div class="map-hint" id="mapHint">先從工具箱選物件，再點地圖放置</div>
@@ -99,7 +99,7 @@
   <dialog id="certificateDialog">
     <form method="dialog" id="certificateForm" class="certificate-form">
       <div class="dialog-head"><div><p class="eyebrow">任務完成</p><h2>下載我的探索證書</h2></div><button value="cancel" class="close-btn" aria-label="關閉">×</button></div>
-      <div class="certificate-preview" aria-hidden="true"><img src="assets/certificate-frame.png" alt=""><span>我的學校附近探索證書</span></div>
+      <div class="certificate-preview" aria-hidden="true"><img src="assets/certificate-frame.png?v=20261119-2" alt=""><span>我的學校附近探索證書</span></div>
       <label for="studentName">請輸入證書上的姓名<input id="studentName" name="studentName" maxlength="20" autocomplete="off" required placeholder="例如：王小明"></label>
       <p class="privacy-note">姓名只用來在這台裝置產生證書，不會上傳或儲存。請使用教師同意的姓名格式。</p>
       <button value="default" class="primary wide" id="downloadCertificateBtn">下載 PNG 證書</button>
