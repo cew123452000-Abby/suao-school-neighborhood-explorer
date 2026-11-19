@@ -24,7 +24,7 @@ const PLACES=[
   {id:'parking',name:'停車場',cat:'traffic',sheet:C,pos:[3,1]}, {id:'gas',name:'加油站',cat:'traffic',sheet:C,pos:[0,2]},
   {id:'station',name:'火車站',cat:'traffic',sheet:OLD,pos:[2,1]}, {id:'bus',name:'公車站',cat:'traffic',sheet:OLD,pos:[3,1]}
 ];
-const MAPS={campus:{src:asset('map-close.jpg'),pin:[18,23],label:'校園近景'},neighborhood:{src:asset('map-wide.jpg'),pin:[44,26],label:'學校周邊'},life:{src:asset('map-life.jpg'),pin:[16,34],label:'生活圈'},town:{src:asset('map-town.jpg'),pin:null,label:'蘇澳市區'},baimiqiao:{src:asset('map-baimiqiao.jpg'),pin:null,label:'白米橋區'},library:{src:asset('map-library.jpg'),pin:null,label:'圖書館區'}};
+const MAPS={campus:{src:asset('map-close.jpg'),pin:[18,23],label:'校園近景'},neighborhood:{src:asset('map-wide.jpg'),pin:[44,26],label:'學校周邊'},life:{src:asset('map-life.jpg'),pin:[16,34],label:'生活圈'},town:{src:asset('map-town.jpg'),pin:null,label:'蘇澳市區'},suaotown:{src:asset('map-suao-town.jpg'),pin:null,label:'蘇澳鎮'},baimiqiao:{src:asset('map-baimiqiao.jpg'),pin:null,label:'白米橋區'},library:{src:asset('map-library.jpg'),pin:null,label:'圖書館區'}};
 const ZHUYIN={
   apartment:['ㄍㄨㄥ','ㄩˋ'],highrise:['ㄍㄠ','ㄌㄡˊ'],rice:['ㄉㄠˋ','ㄊㄧㄢˊ'],fishpond:['ㄩˊ','ㄨㄣ'],tea:['ㄔㄚˊ','ㄩㄢˊ'],park:['ㄍㄨㄥ','ㄩㄢˊ'],
   school:['ㄒㄩㄝˊ','ㄒㄧㄠˋ'],library:['ㄊㄨˊ','ㄕㄨ','ㄍㄨㄢˇ'],clinic:['ㄓㄣˇ','ㄙㄨㄛˇ'],police:['ㄐㄧㄥˇ','ㄔㄚˊ','ㄐㄩˊ'],fire:['ㄒㄧㄠ','ㄈㄤˊ','ㄉㄨㄟˋ'],garden:['ㄘㄞˋ','ㄩㄢˊ'],
