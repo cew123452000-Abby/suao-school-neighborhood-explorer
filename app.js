@@ -24,7 +24,7 @@ const PLACES=[
   {id:'parking',name:'停車場',cat:'traffic',sheet:C,pos:[3,1]}, {id:'gas',name:'加油站',cat:'traffic',sheet:C,pos:[0,2]},
   {id:'station',name:'火車站',cat:'traffic',sheet:OLD,pos:[2,1]}, {id:'bus',name:'公車站',cat:'traffic',sheet:OLD,pos:[3,1]}
 ];
-const MAPS={campus:{src:asset('map-close.jpg'),pin:[18,23],label:'校園近景'},neighborhood:{src:asset('map-wide.jpg'),pin:[44,26],label:'學校周邊'},life:{src:asset('map-life.jpg'),pin:[16,34],label:'生活圈'},town:{src:asset('map-town.jpg'),pin:null,label:'蘇澳市區'}};
+const MAPS={campus:{src:asset('map-close.jpg'),pin:[18,23],label:'校園近景'},neighborhood:{src:asset('map-wide.jpg'),pin:[44,26],label:'學校周邊'},life:{src:asset('map-life.jpg'),pin:[16,34],label:'生活圈'},town:{src:asset('map-town.jpg'),pin:null,label:'蘇澳市區'},baimiqiao:{src:asset('map-baimiqiao.jpg'),pin:null,label:'白米橋區'},library:{src:asset('map-library.jpg'),pin:null,label:'圖書館區'}};
 const ZHUYIN={
   apartment:['ㄍㄨㄥ','ㄩˋ'],highrise:['ㄍㄠ','ㄌㄡˊ'],rice:['ㄉㄠˋ','ㄊㄧㄢˊ'],fishpond:['ㄩˊ','ㄨㄣ'],tea:['ㄔㄚˊ','ㄩㄢˊ'],park:['ㄍㄨㄥ','ㄩㄢˊ'],
   school:['ㄒㄩㄝˊ','ㄒㄧㄠˋ'],library:['ㄊㄨˊ','ㄕㄨ','ㄍㄨㄢˇ'],clinic:['ㄓㄣˇ','ㄙㄨㄛˇ'],police:['ㄐㄧㄥˇ','ㄔㄚˊ','ㄐㄩˊ'],fire:['ㄒㄧㄠ','ㄈㄤˊ','ㄉㄨㄟˋ'],garden:['ㄘㄞˋ','ㄩㄢˊ'],
@@ -35,8 +35,8 @@ const ZHUYIN={
   pier:['ㄇㄚˇ','ㄊㄡˊ'],crossing:['ㄆㄧㄥˊ','ㄐㄧㄠ','ㄉㄠˋ'],parking:['ㄊㄧㄥˊ','ㄔㄜ','ㄔㄤˇ'],gas:['ㄐㄧㄚ','ㄧㄡˊ','ㄓㄢˋ'],station:['ㄏㄨㄛˇ','ㄔㄜ','ㄓㄢˋ'],bus:['ㄍㄨㄥ','ㄔㄜ','ㄓㄢˋ']
 };
 const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
-const grid=$('#itemGrid'),stage=$('#mapStage'),layer=$('#placedLayer'),mapImage=$('#mapImage');
-let selected=null, editingId=null, currentMap='campus', items=[], history=[];
+const grid=$('#itemGrid'),stage=$('#mapStage'),layer=$('#placedLayer'),mapImage=$('#mapImage'),mapContent=$('#mapContent');
+let selected=null, editingId=null, currentMap='campus', items=[], history=[],zoom=1,panX=0,panY=0,mapPan=null,suppressMapClick=false;
 function spriteStyle(p){return `background-image:url('${asset(p.sheet)}');background-position:${p.pos[0]*100/3}% ${p.pos[1]*50}%`}
 function zhuyinParts(raw=''){const match=raw.match(/[ˊˇˋ˙]/);return{base:raw.replace(/[ˊˇˋ˙]/g,''),tone:match?.[0]||''}}
 function labelHTML(p){return `<span class="annotated-label" aria-hidden="true">${[...p.name].map((char,i)=>{const z=zhuyinParts(ZHUYIN[p.id]?.[i]);return `<span class="ruby-unit"><span class="han">${char}</span><span class="zy-wrap"><span class="zy-base">${z.base}</span>${z.tone?`<span class="zy-tone">${z.tone}</span>`:''}</span></span>`}).join('')}</span><span class="sr-only">${p.name}</span>`}
@@ -48,11 +48,20 @@ grid.addEventListener('click',e=>{const btn=e.target.closest('[data-place]');if(
 $$('.category').forEach(b=>b.addEventListener('click',()=>{$$('.category').forEach(x=>x.classList.remove('active'));b.classList.add('active');makePalette(b.dataset.filter);grid.scrollTop=0}));
 function snapshot(){history.push(JSON.stringify(items));if(history.length>30)history.shift()}
 function addAt(x,y){if(!selected)return;snapshot();items.push({id:crypto.randomUUID?.()||Date.now().toString(36)+Math.random(),type:selected,x,y,note:'',help:''});render();const p=PLACES.find(q=>q.id===selected);toast(`已加入「${p.name}」`);selected=null;makePalette($('.category.active').dataset.filter);$('#selectionTip').textContent='請選擇一個地點物件';$('#mapHint').textContent='拖曳可移動；點物件可寫觀察';saveLocal()}
-stage.addEventListener('click',e=>{if(e.target.closest('.placed-item'))return;if(!selected)return;const r=stage.getBoundingClientRect();addAt((e.clientX-r.left)/r.width*100,(e.clientY-r.top)/r.height*100)});
+function clampPan(){const r=stage.getBoundingClientRect(),maxX=(zoom-1)*r.width/2,maxY=(zoom-1)*r.height/2;panX=Math.max(-maxX,Math.min(maxX,panX));panY=Math.max(-maxY,Math.min(maxY,panY))}
+function applyZoom(){clampPan();mapContent.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;$('#zoomValue').textContent=Math.round(zoom*100)+'%';$('#zoomOutBtn').disabled=zoom<=1;$('#zoomInBtn').disabled=zoom>=3;stage.classList.toggle('zoomed',zoom>1)}
+function setZoom(next){const old=zoom;zoom=Math.max(1,Math.min(3,Math.round(next*4)/4));if(zoom===1){panX=0;panY=0}else if(old!==zoom){panX*=zoom/old;panY*=zoom/old}applyZoom()}
+function resetZoom(){zoom=1;panX=0;panY=0;applyZoom()}
+$('#zoomInBtn').addEventListener('click',()=>setZoom(zoom+.25));$('#zoomOutBtn').addEventListener('click',()=>setZoom(zoom-.25));$('#zoomResetBtn').addEventListener('click',resetZoom);
+stage.addEventListener('pointerdown',e=>{if(selected||zoom<=1||e.target.closest('.placed-item,.zoom-controls'))return;e.preventDefault();mapPan={id:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};stage.setPointerCapture(e.pointerId);stage.classList.add('panning')});
+stage.addEventListener('pointermove',e=>{if(!mapPan||e.pointerId!==mapPan.id)return;const dx=e.clientX-mapPan.startX,dy=e.clientY-mapPan.startY;if(Math.abs(dx)+Math.abs(dy)>4)mapPan.moved=true;panX=mapPan.x+dx;panY=mapPan.y+dy;applyZoom()});
+stage.addEventListener('pointerup',e=>{if(!mapPan||e.pointerId!==mapPan.id)return;suppressMapClick=mapPan.moved;mapPan=null;stage.classList.remove('panning');if(stage.hasPointerCapture(e.pointerId))stage.releasePointerCapture(e.pointerId);setTimeout(()=>suppressMapClick=false,0)});
+stage.addEventListener('pointercancel',()=>{mapPan=null;stage.classList.remove('panning')});
+stage.addEventListener('click',e=>{if(suppressMapClick||e.target.closest('.placed-item,.zoom-controls'))return;if(!selected)return;const r=stage.getBoundingClientRect(),screenX=e.clientX-r.left,screenY=e.clientY-r.top,logicalX=(screenX-r.width/2-panX)/zoom+r.width/2,logicalY=(screenY-r.height/2-panY)/zoom+r.height/2;addAt(Math.max(0,Math.min(100,logicalX/r.width*100)),Math.max(0,Math.min(100,logicalY/r.height*100)))});
 function render(){layer.innerHTML=items.map(it=>{const p=PLACES.find(q=>q.id===it.type);return `<button class="placed-item ${it.note||it.help?'has-note':''}" data-id="${it.id}" style="left:${it.x}%;top:${it.y}%" aria-label="${p.name}，點擊編輯觀察紀錄"><span class="sticker" style="${spriteStyle(p)}"></span><em>${labelHTML(p)}</em></button>`}).join('');updateTasks()}
 let drag=null;
 layer.addEventListener('pointerdown',e=>{const el=e.target.closest('.placed-item');if(!el)return;e.preventDefault();const it=items.find(x=>x.id===el.dataset.id);drag={el,it,startX:e.clientX,startY:e.clientY,x:it.x,y:it.y,moved:false};el.setPointerCapture(e.pointerId)});
-layer.addEventListener('pointermove',e=>{if(!drag)return;const r=stage.getBoundingClientRect(),dx=(e.clientX-drag.startX)/r.width*100,dy=(e.clientY-drag.startY)/r.height*100;if(Math.abs(dx)+Math.abs(dy)>.5)drag.moved=true;drag.it.x=Math.max(3,Math.min(97,drag.x+dx));drag.it.y=Math.max(5,Math.min(94,drag.y+dy));drag.el.style.left=drag.it.x+'%';drag.el.style.top=drag.it.y+'%'});
+layer.addEventListener('pointermove',e=>{if(!drag)return;const r=stage.getBoundingClientRect(),dx=(e.clientX-drag.startX)/r.width*100/zoom,dy=(e.clientY-drag.startY)/r.height*100/zoom;if(Math.abs(dx)+Math.abs(dy)>.5)drag.moved=true;drag.it.x=Math.max(3,Math.min(97,drag.x+dx));drag.it.y=Math.max(5,Math.min(94,drag.y+dy));drag.el.style.left=drag.it.x+'%';drag.el.style.top=drag.it.y+'%'});
 layer.addEventListener('pointerup',e=>{if(!drag)return;const d=drag;drag=null;if(d.moved){history.push(JSON.stringify(items.map(it=>it.id===d.it.id?{...it,x:d.x,y:d.y}:it)));saveLocal()}else openEdit(d.it.id)});
 function openEdit(id){editingId=id;const it=items.find(x=>x.id===id),p=PLACES.find(q=>q.id===it.type);$('#dialogTitle').textContent=p.name;$('#noteInput').value=it.note||'';$('#helpInput').value=it.help||'';$('#editDialog').showModal()}
 $('#editForm').addEventListener('submit',e=>{if(e.submitter?.value==='cancel')return;const it=items.find(x=>x.id===editingId);if(!it)return;snapshot();it.note=$('#noteInput').value.trim();it.help=$('#helpInput').value.trim();render();saveLocal();toast('觀察紀錄已更新')});
@@ -63,7 +72,8 @@ $('#saveBtn').addEventListener('click',()=>{saveLocal();toast('作品已儲存�
 $('#undoBtn').addEventListener('click',()=>{if(!history.length)return toast('目前沒有可復原的步驟');items=JSON.parse(history.pop());render();saveLocal();toast('已復原上一步')});
 $('#clearBtn').addEventListener('click',()=>{if(!items.length)return toast('地圖目前是空的');if(confirm('確定要清除地圖上的所有物件嗎？')){snapshot();items=[];render();saveLocal();toast('已清除全部物件')}});
 function applyMap(){const cfg=MAPS[currentMap]||MAPS.campus;mapImage.src=cfg.src;mapImage.alt=`蘇澳國小${cfg.label}地圖`;const pin=$('.school-pin');pin.hidden=!cfg.pin;if(cfg.pin){pin.style.left=cfg.pin[0]+'%';pin.style.top=cfg.pin[1]+'%'}$$('.view-btn').forEach(x=>x.classList.toggle('active',x.dataset.map===currentMap))}
-$$('.view-btn').forEach(b=>b.addEventListener('click',()=>{currentMap=b.dataset.map;applyMap();saveLocal();toast(`已切換：${MAPS[currentMap].label}`)}));
+$$('.view-btn').forEach(b=>b.addEventListener('click',()=>{currentMap=b.dataset.map;resetZoom();applyMap();saveLocal();toast(`已切換：${MAPS[currentMap].label}`)}));
+window.addEventListener('resize',()=>{if(zoom>1)applyZoom()});
 $('#helpBtn').addEventListener('click',()=>$('#helpDialog').showModal());$('#collapseBtn').addEventListener('click',()=>{const toolbox=$('#toolbox'),button=$('#collapseBtn'),c=toolbox.classList.toggle('collapsed');$('.app-shell').classList.toggle('toolbox-collapsed',c);button.textContent=c?'展開':'收合';button.setAttribute('aria-expanded',String(!c));button.setAttribute('aria-label',c?'展開工具箱':'收合工具箱')});
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),2100)}
 function drawAnnotatedCanvas(ctx,p,x,y){const chars=[...p.name],unit=34,w=chars.length*unit+14;ctx.fillStyle='rgba(255,255,255,.94)';ctx.fillRect(x-w/2,y+41,w,52);chars.forEach((char,i)=>{const left=x-w/2+8+i*unit,z=zhuyinParts(ZHUYIN[p.id]?.[i]);ctx.fillStyle='#163a37';ctx.font='bold 18px sans-serif';ctx.fillText(char,left,y+72);ctx.fillStyle='#49615d';ctx.font='14px sans-serif';[...z.base].forEach((symbol,j)=>ctx.fillText(symbol,left+18,y+53+j*11));if(z.tone)ctx.fillText(z.tone,left+29,y+66)})}
@@ -98,5 +108,5 @@ async function downloadCertificate(name){
 }
 $('#certificateForm').addEventListener('submit',async e=>{if(e.submitter?.value==='cancel')return;e.preventDefault();const name=$('#studentName').value.trim();if(!name){$('#studentName').focus();return}const btn=$('#downloadCertificateBtn');btn.disabled=true;btn.textContent='正在製作證書…';try{await downloadCertificate(name);$('#certificateDialog').close()}finally{btn.disabled=false;btn.textContent='下載 PNG 證書'}});
 try{items=JSON.parse(localStorage.getItem('suaoMapItems')||'[]');currentMap=localStorage.getItem('suaoMapView')||'campus';if(currentMap==='wide')currentMap='neighborhood';if(currentMap==='close')currentMap='campus'}catch{items=[]}
-items=items.filter(it=>PLACES.some(p=>p.id===it.type));applyMap();makePalette();render();
+items=items.filter(it=>PLACES.some(p=>p.id===it.type));applyMap();applyZoom();makePalette();render();
 if(!localStorage.getItem('suaoHelpSeen')){setTimeout(()=>$('#helpDialog').showModal(),350);localStorage.setItem('suaoHelpSeen','1')}

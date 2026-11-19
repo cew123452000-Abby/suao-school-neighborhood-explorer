@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#146b63">
   <meta name="description" content="蘇澳國小周邊地圖探索互動遊戲">
   <title>我的學校附近有什麼？｜蘇澳國小探索地圖</title>
-  <link rel="stylesheet" href="styles.css?v=20261119-7">
+  <link rel="stylesheet" href="styles.css?v=20261119-10">
 </head>
 <body>
   <header class="topbar">
@@ -51,6 +51,8 @@
           <button class="view-btn" data-map="neighborhood" type="button">學校周邊</button>
           <button class="view-btn" data-map="life" type="button">生活圈</button>
           <button class="view-btn" data-map="town" type="button">蘇澳市區</button>
+          <button class="view-btn" data-map="baimiqiao" type="button">白米橋區</button>
+          <button class="view-btn" data-map="library" type="button">圖書館區</button>
         </div>
         <div class="edit-actions">
           <button id="undoBtn" type="button">復原</button>
@@ -62,11 +64,18 @@
       </div>
 
       <div class="map-stage" id="mapStage" tabindex="0" aria-label="蘇澳國小周邊互動地圖，先選物件，再點地圖放置">
-        <img id="mapImage" src="assets/map-wide.jpg?v=20261119-2" alt="蘇澳國小與周邊道路地圖">
-        <div class="school-pin" aria-label="蘇澳國小位置"><span>我的學校</span><strong>蘇澳國小</strong></div>
-        <div class="placed-layer" id="placedLayer"></div>
+        <div class="map-content" id="mapContent">
+          <img id="mapImage" src="assets/map-wide.jpg?v=20261119-2" alt="蘇澳國小與周邊道路地圖">
+          <div class="school-pin" aria-label="蘇澳國小位置"><span>我的學校</span><strong>蘇澳國小</strong></div>
+          <div class="placed-layer" id="placedLayer"></div>
+        </div>
         <div class="map-hint" id="mapHint">先從工具箱選物件，再點地圖放置</div>
         <div class="north" aria-label="北方在上">北</div>
+        <div class="zoom-controls" role="group" aria-label="地圖縮放控制">
+          <button id="zoomOutBtn" type="button" aria-label="縮小地圖">−</button>
+          <button id="zoomResetBtn" type="button" aria-label="恢復原比例"><span id="zoomValue">100%</span></button>
+          <button id="zoomInBtn" type="button" aria-label="放大地圖">＋</button>
+        </div>
       </div>
 
       <div class="teacher-note"><strong>教學提醒：</strong>地圖標示會隨時間改變，請以實地踏查與最新公開資訊再確認；不要輸入學生個資。</div>
@@ -109,6 +118,6 @@
   <canvas id="exportCanvas" hidden></canvas>
   <canvas id="certificateCanvas" hidden></canvas>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=20261119-8"></script>
+  <script src="app.js?v=20261119-9"></script>
 </body>
 </html>
