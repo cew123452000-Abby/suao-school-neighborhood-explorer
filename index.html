@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#146b63">
+  <meta name="description" content="蘇澳國小周邊地圖探索互動遊戲">
+  <title>我的學校附近有什麼？｜蘇澳國小探索地圖</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">探索</div>
+      <div><p class="eyebrow">蘇澳國小生活探索</p><h1>我的學校附近有什麼？</h1></div>
+    </div>
+    <div class="header-actions">
+      <div class="progress-pill"><span id="progressText">0／3 任務</span><i><b id="progressBar"></b></i></div>
+      <button class="icon-button" id="helpBtn" type="button" aria-label="開啟玩法說明">？<span>玩法</span></button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="toolbox" id="toolbox" aria-label="地點物件工具箱">
+      <div class="toolbox-head">
+        <div><p class="eyebrow">物件工具箱</p><h2>選一個，再點地圖</h2></div>
+        <button id="collapseBtn" class="mini-button" type="button" aria-label="收合工具箱">收合</button>
+      </div>
+      <div class="category-tabs" role="tablist" aria-label="地點分類">
+        <button class="category active" data-filter="all" role="tab">全部</button>
+        <button class="category" data-filter="building" role="tab">建築</button>
+        <button class="category" data-filter="nature" role="tab">大自然</button>
+        <button class="category" data-filter="facility" role="tab">設施</button>
+        <button class="category" data-filter="shop" role="tab">商店</button>
+        <button class="category" data-filter="traffic" role="tab">交通</button>
+      </div>
+      <div class="item-grid" id="itemGrid"></div>
+      <div class="selection-tip" id="selectionTip">請選擇一個地點物件</div>
+      <section class="missions" aria-labelledby="missionsTitle">
+        <div class="section-title"><h3 id="missionsTitle">今日探索任務</h3><span id="missionCount">0／3</span></div>
+        <label><input type="checkbox" disabled id="task1"><span>在地圖上放入 5 種地點</span></label>
+        <label><input type="checkbox" disabled id="task2"><span>找出 2 個安全幫手</span></label>
+        <label><input type="checkbox" disabled id="task3"><span>完成 3 筆觀察紀錄</span></label>
+      </section>
+    </aside>
+
+    <section class="workspace" aria-label="互動地圖工作區">
+      <div class="map-toolbar">
+        <div class="view-switch" role="group" aria-label="切換地圖範圍">
+          <button class="view-btn active" data-map="campus" type="button">校園近景</button>
+          <button class="view-btn" data-map="neighborhood" type="button">學校周邊</button>
+          <button class="view-btn" data-map="life" type="button">生活圈</button>
+          <button class="view-btn" data-map="town" type="button">蘇澳市區</button>
+        </div>
+        <div class="edit-actions">
+          <button id="undoBtn" type="button">復原</button>
+          <button id="saveBtn" type="button">儲存</button>
+          <button id="exportBtn" class="primary" type="button">匯出作品</button>
+          <button id="certificateBtn" class="certificate-button" type="button" disabled title="完成三項探索任務後即可下載證書">完成任務後領證</button>
+          <button id="clearBtn" class="danger" type="button">清除</button>
+        </div>
+      </div>
+
+      <div class="map-stage" id="mapStage" tabindex="0" aria-label="蘇澳國小周邊互動地圖，先選物件，再點地圖放置">
+        <img id="mapImage" src="assets/map-wide.jpg" alt="蘇澳國小與周邊道路地圖">
+        <div class="school-pin" aria-label="蘇澳國小位置"><span>我的學校</span><strong>蘇澳國小</strong></div>
+        <div class="placed-layer" id="placedLayer"></div>
+        <div class="map-hint" id="mapHint">先從工具箱選物件，再點地圖放置</div>
+        <div class="north" aria-label="北方在上">北</div>
+      </div>
+
+      <div class="teacher-note"><strong>教學提醒：</strong>地圖標示會隨時間改變，請以實地踏查與最新公開資訊再確認；不要輸入學生個資。</div>
+    </section>
+  </main>
+
+  <dialog id="editDialog">
+    <form method="dialog" id="editForm">
+      <div class="dialog-head"><div><p class="eyebrow">觀察紀錄</p><h2 id="dialogTitle">地點名稱</h2></div><button value="cancel" class="close-btn" aria-label="關閉">×</button></div>
+      <label>我看到什麼？<textarea id="noteInput" maxlength="80" placeholder="例如：放學時間有很多人經過，過馬路要看號誌。"></textarea></label>
+      <label>這個地方可以幫助我們……<input id="helpInput" maxlength="40" placeholder="例如：借書、搭車、休息、求助"></label>
+      <div class="dialog-actions"><button id="deleteItemBtn" type="button" class="danger">刪除此物件</button><button value="default" class="primary">完成紀錄</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="helpDialog">
+    <form method="dialog" class="help-card">
+      <button value="cancel" class="close-btn" aria-label="關閉">×</button>
+      <p class="eyebrow">三步驟開始探索</p><h2>小小社區探險家，出發！</h2>
+      <ol>
+        <li><b>選物件</b><span>從工具箱挑選學校附近看得到的地點。</span></li>
+        <li><b>放地圖</b><span>點一下地圖放置；也可以拖曳調整位置。</span></li>
+        <li><b>寫觀察</b><span>點地圖上的物件，記下用途與安全提醒。</span></li>
+      </ol>
+      <p class="privacy-note">請勿填入學生姓名、住址、聯絡方式或其他個人資料。</p>
+      <button value="default" class="primary wide">我知道了，開始探索</button>
+    </form>
+  </dialog>
+
+  <dialog id="certificateDialog">
+    <form method="dialog" id="certificateForm" class="certificate-form">
+      <div class="dialog-head"><div><p class="eyebrow">任務完成</p><h2>下載我的探索證書</h2></div><button value="cancel" class="close-btn" aria-label="關閉">×</button></div>
+      <div class="certificate-preview" aria-hidden="true"><img src="assets/certificate-frame.png" alt=""><span>我的學校附近探索證書</span></div>
+      <label for="studentName">請輸入證書上的姓名<input id="studentName" name="studentName" maxlength="20" autocomplete="off" required placeholder="例如：王小明"></label>
+      <p class="privacy-note">姓名只用來在這台裝置產生證書，不會上傳或儲存。請使用教師同意的姓名格式。</p>
+      <button value="default" class="primary wide" id="downloadCertificateBtn">下載 PNG 證書</button>
+    </form>
+  </dialog>
+
+  <canvas id="exportCanvas" hidden></canvas>
+  <canvas id="certificateCanvas" hidden></canvas>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
