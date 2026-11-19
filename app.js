@@ -45,7 +45,7 @@ function makePalette(filter='all'){
 }
 function selectPlace(id){selected=selected===id?null:id;makePalette($('.category.active').dataset.filter);const p=PLACES.find(x=>x.id===selected);$('#selectionTip').textContent=p?`已選「${p.name}」，請點地圖放置`:'請選擇一個地點物件';stage.classList.toggle('placing',!!p);$('#mapHint').textContent=p?`點地圖放置：${p.name}`:'先從工具箱選物件，再點地圖放置'}
 grid.addEventListener('click',e=>{const btn=e.target.closest('[data-place]');if(btn)selectPlace(btn.dataset.place)});
-$$('.category').forEach(b=>b.addEventListener('click',()=>{$$('.category').forEach(x=>x.classList.remove('active'));b.classList.add('active');makePalette(b.dataset.filter)}));
+$$('.category').forEach(b=>b.addEventListener('click',()=>{$$('.category').forEach(x=>x.classList.remove('active'));b.classList.add('active');makePalette(b.dataset.filter);grid.scrollTop=0}));
 function snapshot(){history.push(JSON.stringify(items));if(history.length>30)history.shift()}
 function addAt(x,y){if(!selected)return;snapshot();items.push({id:crypto.randomUUID?.()||Date.now().toString(36)+Math.random(),type:selected,x,y,note:'',help:''});render();const p=PLACES.find(q=>q.id===selected);toast(`已加入「${p.name}」`);selected=null;makePalette($('.category.active').dataset.filter);$('#selectionTip').textContent='請選擇一個地點物件';$('#mapHint').textContent='拖曳可移動；點物件可寫觀察';saveLocal()}
 stage.addEventListener('click',e=>{if(e.target.closest('.placed-item'))return;if(!selected)return;const r=stage.getBoundingClientRect();addAt((e.clientX-r.left)/r.width*100,(e.clientY-r.top)/r.height*100)});
